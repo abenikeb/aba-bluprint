@@ -84,6 +84,8 @@ export class OrderService {
       order.amount,
     );
 
+    console.log({ request: request });
+
     const { data } = await this.httpService.axiosRef.post(
       'https://196.188.120.3:38443/apiaccess/payment/gateway/payment/v1/merchant/preOrder',
       request,
@@ -121,8 +123,6 @@ export class OrderService {
       nonce_str: createNonceStr(),
       method: 'payment.preorder',
       version: '1.0',
-      sign_type: 'SHA256WithRSA',
-      sign: '',
       biz_content: {
         notify_url: this.configService.get('NOTIFY_URL'),
         trade_type: 'InApp',
@@ -130,7 +130,7 @@ export class OrderService {
         merch_code: this.configService.get('MERCH_CODE'),
         // merch_order_id: orderId,
         merch_order_id: '209185161732046',
-        title: 'BuyGoods',
+        title: 'BuyGoodsWithHnadler',
         // total_amount: amount.toString(),
         total_amount: amount + '',
         trans_currency: 'ETB',
@@ -140,13 +140,20 @@ export class OrderService {
         payee_identifier_type: '04',
         payee_type: '5000',
       },
+      // sign_type: 'SHA256WithRSA',
+      // sign: '',
     };
+
     getSignSourceString(getParaMapToSign(req));
 
     req['sign'] = generateSign(
       this.configService.get('PRIVATE_KEY'),
       getSignSourceString(getParaMapToSign(req)),
     );
+
+    // req.biz_content = biz;
+    // req.sign = tools.signRequestObject(req);
+    req['sign_type'] = 'SHA256WithRSA';
 
     return req;
   }
@@ -159,6 +166,9 @@ export class OrderService {
       prepay_id: prepayId,
       timestamp: createTimeStamp(),
     };
+
+    getSignSourceString(getParaMapToSign(map));
+
     const sign = generateSign(
       this.configService.get('PRIVATE_KEY'),
       getSignSourceString(getParaMapToSign(map)),
