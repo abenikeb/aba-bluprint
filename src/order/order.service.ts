@@ -144,7 +144,7 @@ export class OrderService {
         // merch_order_id: '209185161732046',
         title: 'BuyGoodsWithHnadler',
         // total_amount: amount.toString(),
-        total_amount: amount + '',
+        total_amount: '100',
         trans_currency: 'ETB',
         timeout_express: '120m',
         business_type: 'BuyGoods',
