@@ -101,13 +101,20 @@ export class OrderService {
       },
     );
 
+    console.log({ data: data });
+
     const rawRequest = this.createRawRequest(data.biz_content.prepay_id);
+
+    console.log({ rawRequest: rawRequest });
 
     await this.paymentModel.findByIdAndUpdate(payment._id, {
       rawRequest,
     });
 
     order.payment.rawRequest = rawRequest;
+
+    console.log({ order: order });
+    console.log({ order: order });
 
     return {
       data: {
@@ -128,7 +135,7 @@ export class OrderService {
         trade_type: 'InApp',
         appid: this.configService.get('APP_ID'),
         merch_code: this.configService.get('MERCH_CODE'),
-        merch_order_id: orderId,
+        merch_order_id: orderId, //ObjId
         // merch_order_id: '209185161732046',
         title: 'BuyGoodsWithHnadler',
         // total_amount: amount.toString(),
