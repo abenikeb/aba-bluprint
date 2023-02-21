@@ -115,11 +115,12 @@ export class OrderService {
       order.payment.rawRequest = rawRequest;
 
       console.log({ order: order });
+      console.log({ 'new order': 'order OBj Removed' });
       // console.log({ order: order });
 
       return {
         data: {
-          order,
+          // order,
           rawRequest,
         },
       };
