@@ -35,93 +35,97 @@ export class OrderService {
   }
 
   async create(createOrderDto: CreateOrderDto) {
-    let order = await this.orderModel.create(createOrderDto);
-    const payment = await this.paymentModel.create({
-      order: order._id,
-      amount: 0,
-      status: PaymentStatus.PENDING,
-    });
+    try {
+      let order = await this.orderModel.create(createOrderDto);
+      const payment = await this.paymentModel.create({
+        order: order._id,
+        amount: 0,
+        status: PaymentStatus.PENDING,
+      });
 
-    order = await this.orderModel.findByIdAndUpdate(
-      order._id,
-      {
-        payment: payment._id,
-      },
-      {
-        new: true,
-        populate: 'payment',
-      },
-    );
-
-    /**
-     * GET FABRIC TOKEN
-     */
-
-    const {
-      data: { token },
-    } = await this.httpService.axiosRef.post(
-      'https://196.188.120.3:38443/apiaccess/payment/gateway/payment/v1/token',
-      {
-        appSecret: this.configService.get('APP_SECRET'),
-      },
-      {
-        headers: {
-          'Accept-Encoding': 'gzip,deflate,compress',
-          'X-APP-Key': this.configService.get('APP_KEY'),
+      order = await this.orderModel.findByIdAndUpdate(
+        order._id,
+        {
+          payment: payment._id,
         },
-        httpsAgent: new https.Agent({
-          rejectUnauthorized: false,
-        }),
-      },
-    );
-
-    /**
-     * REQUEST CREATE ORDER
-     */
-
-    const request = this.createRequestObject(
-      order._id.toString(),
-      order.amount,
-    );
-
-    console.log({ request: request });
-
-    const { data } = await this.httpService.axiosRef.post(
-      'https://196.188.120.3:38443/apiaccess/payment/gateway/payment/v1/merchant/preOrder',
-      request,
-      {
-        headers: {
-          'Accept-Encoding': 'gzip,deflate,compress',
-          'X-APP-Key': this.configService.get('APP_KEY'),
-          Authorization: token,
+        {
+          new: true,
+          populate: 'payment',
         },
-        httpsAgent: new https.Agent({
-          rejectUnauthorized: false,
-        }),
-      },
-    );
+      );
 
-    console.log({ data: data });
+      /**
+       * GET FABRIC TOKEN
+       */
 
-    const rawRequest = this.createRawRequest(data.biz_content.prepay_id);
+      const {
+        data: { token },
+      } = await this.httpService.axiosRef.post(
+        'https://196.188.120.3:38443/apiaccess/payment/gateway/payment/v1/token',
+        {
+          appSecret: this.configService.get('APP_SECRET'),
+        },
+        {
+          headers: {
+            'Accept-Encoding': 'gzip,deflate,compress',
+            'X-APP-Key': this.configService.get('APP_KEY'),
+          },
+          httpsAgent: new https.Agent({
+            rejectUnauthorized: false,
+          }),
+        },
+      );
 
-    console.log({ rawRequest: rawRequest });
+      /**
+       * REQUEST CREATE ORDER
+       */
 
-    await this.paymentModel.findByIdAndUpdate(payment._id, {
-      rawRequest,
-    });
+      const request = this.createRequestObject(
+        order._id.toString(),
+        order.amount,
+      );
 
-    order.payment.rawRequest = rawRequest;
+      console.log({ request: request });
 
-    console.log({ order: order });
-    console.log({ order: order });
+      const { data } = await this.httpService.axiosRef.post(
+        'https://196.188.120.3:38443/apiaccess/payment/gateway/payment/v1/merchant/preOrder',
+        request,
+        {
+          headers: {
+            'Accept-Encoding': 'gzip,deflate,compress',
+            'X-APP-Key': this.configService.get('APP_KEY'),
+            Authorization: token,
+          },
+          httpsAgent: new https.Agent({
+            rejectUnauthorized: false,
+          }),
+        },
+      );
 
-    return {
-      data: {
-        order,
+      console.log({ data: data });
+
+      const rawRequest = this.createRawRequest(data.biz_content.prepay_id);
+
+      console.log({ rawRequest: rawRequest });
+
+      await this.paymentModel.findByIdAndUpdate(payment._id, {
         rawRequest,
-      },
-    };
+      });
+
+      order.payment.rawRequest = rawRequest;
+
+      console.log({ order: order });
+      // console.log({ order: order });
+
+      return {
+        data: {
+          order,
+          rawRequest,
+        },
+      };
+    } catch (ex) {
+      console.log('error:', ex);
+    }
   }
 
   createRequestObject(orderId: string, amount: number) {
